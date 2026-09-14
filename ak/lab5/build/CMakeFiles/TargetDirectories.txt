@@ -1,0 +1,3 @@
+/Users/identicalaffiliation/Desktop/work/3kurs/ak/lab5/build/CMakeFiles/MyProject.dir
+/Users/identicalaffiliation/Desktop/work/3kurs/ak/lab5/build/CMakeFiles/edit_cache.dir
+/Users/identicalaffiliation/Desktop/work/3kurs/ak/lab5/build/CMakeFiles/rebuild_cache.dir
