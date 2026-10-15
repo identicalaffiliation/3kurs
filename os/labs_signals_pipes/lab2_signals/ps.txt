@@ -1,0 +1,12 @@
+===== ДО посылки SIGUSR1 =====
+  PID  PPID STAT COMMAND
+77926 77917 S+   ./father
+77927 77926 S+   ./father
+77928 77926 S+   ./father
+77929 77926 S+   ./father
+===== ПОСЛЕ посылки SIGUSR1 =====
+  PID  PPID STAT COMMAND
+77926 77917 S+   ./father
+77927 77926 Z+   <defunct>
+77928 77926 S+   ./father
+77929 77926 S+   ./father

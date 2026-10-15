@@ -1,0 +1,109 @@
+############ 1 (A). pipe_simple: сын -> отец через pipe ############
+Father created Pipe! fd[0]=3 (чтение), fd[1]=4 (запись)
+Father is working again!
+Child is working!
+End of Child!
+---- данные из канала (160 байт) ----
+Привет из файла input.txt!
+Эти строки сын передал отцу через неименованный канал pipe.
+Line 3: 1 2 3
+---- конец данных (read вернул 0) ----
+End of Father! Данные сохранены в output.txt
+--- output.txt совпадает с input.txt? ---
+да, файлы идентичны
+
+############ 2,3 (A). pipe_cs: клиент-сервер на двух pipe ############
+--- существующий файл ---
+Клиент: введите полное имя файла: /home/claude/lab3_pipes/input.txt
+Сервер: запрошен файл "/home/claude/lab3_pipes/input.txt"
+Привет из файла input.txt!
+Эти строки сын передал отцу через неименованный канал pipe.
+Line 3: 1 2 3
+--- несуществующий файл ---
+Клиент: введите полное имя файла: /no/such/file.txt
+Сервер: запрошен файл "/no/such/file.txt"
+Ошибка: невозможно открыть /no/such/file.txt: No such file or directory
+
+############ 1 (B). FIFO «Здравствуй, Мир!» ############
+Сервер: FIFO /tmp/fifo.hello создан, жду клиента...
+prw-r--r-- 1 root root 0 Oct 15 20:17 /tmp/fifo.hello
+Сервер: получено сообщение: Клиент: отправлено 30 байт
+Клиент: FIFO удалён
+Здравствуй, Мир!
+
+############ 2 (B). Неродственные клиент и сервер на FIFO ############
+Server: FIFO1 is created!
+Server: FIFO2 is created!
+Client: FIFO1 is opened for write writefd=3
+Server: FIFO1 is opened for read and readfd=3
+Server: FIFO2 is opened for write and writefd=4
+Client: FIFO2 is opened for read readfd=4
+Клиент: введите полное имя файла: /home/claude/lab3_pipes/input.txt
+Сервер: запрошен файл "/home/claude/lab3_pipes/input.txt"
+Server is terminated!
+Привет из файла input.txt!
+Эти строки сын передал отцу через неименованный канал pipe.
+Line 3: 1 2 3
+Client: FIFO1 is deleted!
+Client: FIFO2 is deleted!
+Client is terminated!
+--- ошибка ---
+Server: FIFO1 is created!
+Server: FIFO2 is created!
+Client: FIFO1 is opened for write writefd=3
+Server: FIFO1 is opened for read and readfd=3
+Server: FIFO2 is opened for write and writefd=4
+Client: FIFO2 is opened for read readfd=4
+Клиент: введите полное имя файла: /no/such/file.txt
+Сервер: запрошен файл "/no/such/file.txt"
+Server is terminated!
+Ошибка: невозможно открыть /no/such/file.txt: No such file or directory
+Client: FIFO1 is deleted!
+Client: FIFO2 is deleted!
+Client is terminated!
+
+############ 3 (B). Структурированные сообщения через FIFO ############
+Server: FIFO1 is created!
+Server: FIFO2 is created!
+Client: FIFO1 is opened for write writefd=3
+Server: FIFO1 is opened for read and readfd=3
+Server: FIFO2 is opened for write and writefd=4
+Client: FIFO2 is opened for read readfd=4
+Client: введите полное имя файла: /home/claude/lab3_pipes/input.txt
+Server: получено сообщение type=REQUEST len=33: "/home/claude/lab3_pipes/input.txt"
+Server: отправлено сообщений DATA: 1
+Server: отправлено END
+Server is terminated!
+Привет из файла input.txt!
+Эти строки сын передал отцу через неименованный канал pipe.
+Line 3: 1 2 3
+Client: получено END, сообщений DATA: 1
+Client: FIFO1 is deleted!
+Client: FIFO2 is deleted!
+Client is terminated!
+--- ошибка ---
+Server: FIFO1 is created!
+Server: FIFO2 is created!
+Client: FIFO1 is opened for write writefd=3
+Server: FIFO1 is opened for read and readfd=3
+Server: FIFO2 is opened for write and writefd=4
+Client: FIFO2 is opened for read readfd=4
+Client: введите полное имя файла: /no/such/file.txt
+Server: получено сообщение type=REQUEST len=17: "/no/such/file.txt"
+Server: отправлено ERROR
+Server: отправлено END
+Server is terminated!
+Client: сервер сообщил об ошибке: невозможно открыть /no/such/file.txt: No such file or directory
+Client: получено END, сообщений DATA: 0
+Client: FIFO1 is deleted!
+Client: FIFO2 is deleted!
+Client is terminated!
+--- большой файл (несколько сообщений DATA) ---
+Client: FIFO1 is opened for write writefd=3
+Client: FIFO2 is opened for read readfd=4
+Client: введите полное имя файла: /home/claude/lab3_pipes/big.txt
+Client: получено END, сообщений DATA: 4
+Client: FIFO1 is deleted!
+Client: FIFO2 is deleted!
+Client is terminated!
+big.txt (13893 байт) передан без искажений

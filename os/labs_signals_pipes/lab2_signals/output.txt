@@ -1,0 +1,114 @@
+############ 0. kill -l (Уровень 1 A) ############
+ 1) SIGHUP	 2) SIGINT	 3) SIGQUIT	 4) SIGILL	 5) SIGTRAP
+ 6) SIGABRT	 7) SIGBUS	 8) SIGFPE	 9) SIGKILL	10) SIGUSR1
+11) SIGSEGV	12) SIGUSR2	13) SIGPIPE	14) SIGALRM	15) SIGTERM
+16) SIGSTKFLT	17) SIGCHLD	18) SIGCONT	19) SIGSTOP	20) SIGTSTP
+21) SIGTTIN	22) SIGTTOU	23) SIGURG	24) SIGXCPU	25) SIGXFSZ
+26) SIGVTALRM	27) SIGPROF	28) SIGWINCH	29) SIGIO	30) SIGPWR
+31) SIGSYS	34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3
+38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8
+43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13
+48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12
+53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7
+58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2
+63) SIGRTMAX-1	64) SIGRTMAX	
+
+############ 1. father (Уровень 1 A) ############
+father: pid = 874
+son1: pid = 875, ppid = 874, SIGUSR1 -> SIG_DFL
+son3: pid = 877, ppid = 874, SIGUSR1 -> свой обработчик
+son2: pid = 876, ppid = 874, SIGUSR1 -> SIG_IGN
+father: SIGUSR1 отправлен son1 (pid 875)
+father: SIGUSR1 отправлен son2 (pid 876)
+father: SIGUSR1 отправлен son3 (pid 877)
+son3 (pid 877): перехватил сигнал 10 (SIGUSR1) и обработал сам
+father: son1 завершён сигналом 10 (User defined signal 1)
+father: son2 завершён сигналом 15 (Terminated)
+father: son3 завершён сигналом 15 (Terminated)
+father: таблица процессов записана в ps.txt
+--- ps.txt ---
+===== ДО посылки SIGUSR1 =====
+  UID   PID          PENDING          BLOCKED          IGNORED           CAUGHT STAT TTY        TIME COMMAND
+    0   874 0000000000000000 0000000000010000 0000000000000006 0000000000000000 S    ?          0:00 ./father
+    0   875 0000000000000000 0000000000000000 0000000000000000 0000000000000000 S    ?          0:00 ./father
+    0   876 0000000000000000 0000000000000000 0000000000000200 0000000000000000 S    ?          0:00 ./father
+    0   877 0000000000000000 0000000000000000 0000000000000000 0000000000000200 S    ?          0:00 ./father
+===== ПОСЛЕ посылки SIGUSR1 =====
+  UID   PID          PENDING          BLOCKED          IGNORED           CAUGHT STAT TTY        TIME COMMAND
+    0   874 0000000000000000 0000000000010000 0000000000000006 0000000000000000 S    ?          0:00 ./father
+    0   875 0000000000000200 0000000000000000 0000000000000000 0000000000000000 Z    ?          0:00 [father] <defunct>
+    0   876 0000000000000000 0000000000000000 0000000000000200 0000000000000000 S    ?          0:00 ./father
+    0   877 0000000000000000 0000000000000000 0000000000000000 0000000000000200 S    ?          0:00 ./father
+
+############ 2. sig_father + sig_son (Уровень 2 A) ############
+sig_father is starting! pid=883
+sig_son is starting! pid=885 ppid=883
+usr1 handler: получен сигнал 10 — Our signal! (SIGUSR1)
+              pid=883 ppid=871
+sig_father: сигнал получен (всего обработано: 1), ждём дальше...
+sig_son: Send signal SIGUSR1 to father (pid 883) successfully!
+>>> с терминала: kill -s USR2 883
+usr2 handler: получен сигнал 12 — Our signal! (SIGUSR2)
+              pid=883 ppid=871
+sig_father: сигнал получен (всего обработано: 2), ждём дальше...
+>>> с терминала: kill -s USR1 883
+usr1 handler: получен сигнал 10 — Our signal! (SIGUSR1)
+              pid=883 ppid=871
+sig_father: сигнал получен (всего обработано: 3), ждём дальше...
+>>> с терминала: kill -s INT  883 (действие по умолчанию — завершение)
+sig_father завершился, код 130 (128+2 = SIGINT)
+
+############ 3. Нити и сигналы (Уровень 3 A) ############
+--- режим 0: kill <TID второй нити> с терминала ---
+Процесс pid = 889, режим 0
+  [нить 2] запущена, tid = 891
+  [нить 1] запущена, tid = 892
+  [нить 2] работаю... 1
+>>> kill 891  (TID второй нити)
+процесс завершён целиком, код 143 (128+15 = SIGTERM)
+--- режим 1: pthread_kill(t2, SIGUSR1) без обработчика ---
+Процесс pid = 899, режим 1
+  [нить 2] запущена, tid = 900
+  [нить 1] запущена, tid = 901
+  [нить 2] работаю... 1
+  [нить 1] посылаю SIGUSR1 во вторую нить: pthread_kill(t2, SIGUSR1)
+./run.sh: line 39:   899 User defined signal 1   ./thread_sig 1
+код завершения процесса: 138 (128+10 = SIGUSR1 — погиб весь процесс)
+--- режим 2: свой обработчик + pthread_exit(NULL) ---
+Процесс pid = 902, режим 2
+  [нить 2] запущена, tid = 903
+  [нить 1] запущена, tid = 904
+  [нить 2] работаю... 1
+  [нить 1] посылаю SIGUSR1 во вторую нить: pthread_kill(t2, SIGUSR1)
+  [нить 1] pthread_kill вернул 0
+  [нить 2, tid 903] получен сигнал 10 (SIGUSR1) — выходим через pthread_exit
+main: обе нити завершены, процесс продолжает работу и выходит нормально
+
+############ 4. sigact (Уровни 1-3 B) ############
+--- вариант 1: USR1 с терминала, затем INT (сон в обработчике сокращён до 3 с) ---
+Sigact pid=905 (сон в обработчике 3 с)
+Action for signal 10 is setted
+Action for signal 12 is setted (mysig, старый обработчик = SIG_DFL)
+>>> kill -s USR1 905
+Signal 10 (User defined signal 1) is coming — обработчик засыпает на 3 с, SIGINT заблокирован
+>>> kill -s INT  905 (пока работает обработчик — SIGINT заблокирован)
+    маска блокировки: SigBlk:	0000000000000202
+    ожидающие сигналы: ShdPnd:	0000000000000002
+Signal 10: обработчик завершён, маска восстановлена
+sigact завершился, код 130 — SIGINT доставлен только после выхода из обработчика
+--- вариант 2: обработчик сам вызывает kill(getpid(), SIGINT) ---
+Sigact pid=914 (сон в обработчике 3 с, вариант с kill(getpid(), SIGINT))
+Action for signal 10 is setted
+Action for signal 12 is setted (mysig, старый обработчик = SIG_DFL)
+>>> kill -s USR2 914
+Signal 12 (User defined signal 2) is coming — обработчик засыпает на 3 с, SIGINT заблокирован
+  обработчик: kill(getpid(), SIGINT) — SIGINT отложен до выхода из обработчика
+Signal 12: обработчик завершён, маска восстановлена
+sigact завершился, код 130
+--- для сравнения: без сигналов SIGINT -> нормальное завершение ---
+Sigact pid=916 (сон в обработчике 1 с)
+Action for signal 10 is setted
+Action for signal 12 is setted (mysig, старый обработчик = SIG_DFL)
+We restored action for signal 10!
+We restored action for signal 12!
+sigact: нормальное завершение
