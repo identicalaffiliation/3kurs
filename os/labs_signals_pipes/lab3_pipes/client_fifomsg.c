@@ -1,10 +1,3 @@
-/*
- * client_fifomsg.c — Уровень 3 (B): клиент со структурированными сообщениями
- *
- * Читает имя файла из stdin, отправляет его серверу сообщением REQUEST,
- * затем принимает сообщения DATA / ERROR до сообщения END.
- * Запуск: echo /etc/hostname | ./client_fifomsg
- */
 #include "mesg.h"
 
 static void client(int readfd, int writefd)

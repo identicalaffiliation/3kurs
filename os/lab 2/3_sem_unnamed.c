@@ -16,14 +16,14 @@ static void *producer(void *a)
 {
     (void)a;
     for (int i = 1; i <= ITEMS; i++) {
-        sem_wait(&empty);                    /* P(empty) */
+        sem_wait(&empty);                   
         pthread_mutex_lock(&mtx);
         buf[in] = i;
         in = (in + 1) % BUF_SIZE;
         int v; sem_getvalue(&full, &v);
         printf("Производитель: положил %d   (заполнено до post: %d)\n", i, v);
         pthread_mutex_unlock(&mtx);
-        sem_post(&full);                     /* V(full) */
+        sem_post(&full);                    
     }
     return NULL;
 }
@@ -32,21 +32,20 @@ static void *consumer(void *a)
 {
     (void)a;
     for (int i = 0; i < ITEMS; i++) {
-        sem_wait(&full);                     /* P(full) */
+        sem_wait(&full);                   
         pthread_mutex_lock(&mtx);
         int x = buf[out];
         out = (out + 1) % BUF_SIZE;
         printf("    Потребитель: взял %d\n", x);
         pthread_mutex_unlock(&mtx);
-        sem_post(&empty);                    /* V(empty) */
-        usleep(50000);                       /* потребитель медленнее */
+        sem_post(&empty);                   
+        usleep(50000);                     
     }
     return NULL;
 }
 
 int main(void)
 {
-    /* pshared = 0: семафор общий для нитей одного процесса */
     sem_init(&empty, 0, BUF_SIZE);
     sem_init(&full,  0, 0);
 

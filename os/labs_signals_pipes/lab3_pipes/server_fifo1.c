@@ -1,14 +1,3 @@
-/*
- * server_fifo1.c — Уровень 2 (B): сервер на именованных каналах
- *
- * Клиент и сервер из задания 2,3 (A), но теперь это НЕРОДСТВЕННЫЕ
- * процессы: они запускаются отдельно и находят друг друга по именам FIFO.
- *   FIFO1 (/tmp/fifo.1): клиент -> сервер
- *   FIFO2 (/tmp/fifo.2): сервер -> клиент
- * Сервер создаёт оба FIFO, клиент их удаляет.
- *
- * Запуск: ./server_fifo1 &   затем   ./client_fifo1
- */
 #include "common.h"
 
 int main(void)
@@ -28,8 +17,6 @@ int main(void)
     printf("Server: FIFO2 is created!\n");
     fflush(stdout);
 
-    /* порядок open согласован с клиентом, иначе оба процесса
-       заблокируются навсегда (взаимная блокировка) */
     if ((readfd = open(FIFO1, O_RDONLY)) < 0) {
         perror("Server: can not open FIFO1 for read"); exit(1);
     }

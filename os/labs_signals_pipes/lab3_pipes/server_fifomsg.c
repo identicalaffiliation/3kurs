@@ -1,10 +1,3 @@
-/*
- * server_fifomsg.c — Уровень 3 (B): сервер со структурированными сообщениями
- *
- * Принимает сообщение REQUEST с именем файла и отвечает серией сообщений
- * DATA с содержимым файла (или одним ERROR), завершая ответ сообщением END.
- * Запуск: ./server_fifomsg &   затем   ./client_fifomsg
- */
 #include "mesg.h"
 
 static void server(int readfd, int writefd)
@@ -40,7 +33,7 @@ static void server(int readfd, int writefd)
         close(fd);
         printf("Server: отправлено сообщений DATA: %d\n", parts);
     }
-    mesg.mesg_type = MSG_END;                /* признак конца ответа */
+    mesg.mesg_type = MSG_END;              
     mesg.mesg_len = 0;
     mesg_send(writefd, &mesg);
     printf("Server: отправлено END\n");

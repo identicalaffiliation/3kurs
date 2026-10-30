@@ -1,18 +1,3 @@
-/*
- * sigact.c — Уровни 1, 2, 3 (B), надёжные сигналы (sigaction)
- *
- * Обработчик SIGUSR1/SIGUSR2 «засыпает» на SLEEP секунд (по заданию 60).
- * В sa_mask добавлен SIGINT, поэтому пока работает обработчик,
- * SIGINT ЗАБЛОКИРОВАН: он не теряется, а остаётся в ожидании (pending)
- * и доставляется сразу после выхода из обработчика.
- *
- * Запуск:
- *   ./sigact [сек] [-k] &
- *     сек — длительность сна в обработчике (по умолчанию 60)
- *     -k  — вариант 2: обработчик сам посылает себе SIGINT
- *           через kill(getpid(), SIGINT)
- *   Затем с терминала: kill -s USR1 <PID>  (или USR2), потом kill -s INT <PID>
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,15 +19,13 @@ static void sig_handler(int sig)
     printf("Signal %d: обработчик завершён, маска восстановлена\n", sig);
 }
 
-/* надёжная установка обработчика (функция mysig из методички):
-   возвращает предыдущий обработчик или SIG_ERR */
 typedef void (*sighandler_fn)(int);
 static sighandler_fn mysig(int sig, sighandler_fn handler)
 {
     struct sigaction act, oldact;
-    act.sa_handler = handler;              /* обработчик сигнала sig */
-    sigemptyset(&act.sa_mask);             /* обнуление маски */
-    sigaddset(&act.sa_mask, SIGINT);       /* блокировка SIGINT на время обработчика */
+    act.sa_handler = handler;             
+    sigemptyset(&act.sa_mask);            
+    sigaddset(&act.sa_mask, SIGINT);  
     act.sa_flags = 0;
     if (sigaction(sig, &act, &oldact) < 0)
         return SIG_ERR;
@@ -83,17 +66,14 @@ int main(int argc, char **argv)
     printf("Sigact pid=%d (сон в обработчике %d с%s)\n", getpid(), sleep_sec,
            self_int ? ", вариант с kill(getpid(), SIGINT)" : "");
 
-    /* фоновый процесс из неинтерактивного shell стартует с SIGINT = SIG_IGN,
-       поэтому явно возвращаем действие по умолчанию */
     signal(SIGINT, SIG_DFL);
 
-    set_action(SIGUSR1, &new_usr1, &old_usr1);          /* как в скелете */
-    sighandler_fn old_usr2 = mysig(SIGUSR2, sig_handler); /* через mysig */
+    set_action(SIGUSR1, &new_usr1, &old_usr1);         
+    sighandler_fn old_usr2 = mysig(SIGUSR2, sig_handler); 
     if (old_usr2 == SIG_ERR) { printf("mysig failed\n"); return 1; }
     printf("Action for signal %d is setted (mysig, старый обработчик = %s)\n", SIGUSR2,
            old_usr2 == SIG_DFL ? "SIG_DFL" : "другой");
 
-    /* ждём сигналы: каждый пришедший прерывает sleep */
     int left = sleep_sec;
     while ((left = sleep(left)) > 0)
         ;

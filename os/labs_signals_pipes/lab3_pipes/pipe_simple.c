@@ -1,20 +1,3 @@
-/*
- * pipe_simple.c — Уровень 1 (A): разбор скелета из методички
- *
- * Что происходит:
- *  1. Отец создаёт канал pipe(filedes): filedes[0] — чтение, filedes[1] — запись.
- *  2. fork(): сын наследует ОБА дескриптора канала.
- *  3. Сын закрывает ненужный конец для чтения, посимвольно читает input.txt
- *     и пишет символы в канал, затем закрывает конец для записи.
- *  4. Отец закрывает конец для записи (иначе read никогда не вернёт 0 —
- *     канал будет считаться открытым на запись им самим) и читает из канала,
- *     пока read не вернёт 0 (все писатели закрыли канал). Прочитанное
- *     печатается на экран и пишется в output.txt.
- *
- * Исправления относительно скелета: недостающие #include, проверка fopen,
- * "%c" в fscanf пропускал бы ничего — заменено на fgetc (читает и пробелы,
- * и переводы строк), ожидание сына через wait.
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -22,7 +5,7 @@
 
 int main(void)
 {
-    int filedes[2];                          /* 0 - read; 1 - write */
+    int filedes[2];                   
     char temp_ch;
 
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -32,7 +15,7 @@ int main(void)
     }
     printf("Father created Pipe! fd[0]=%d (чтение), fd[1]=%d (запись)\n", filedes[0], filedes[1]);
 
-    if (fork() == 0) {                       /* ---- сын: писатель ---- */
+    if (fork() == 0) {                      
         int ch;
         close(filedes[0]);
         printf("Child is working!\n");
@@ -48,12 +31,9 @@ int main(void)
         exit(0);
     }
 
-    /* ---- отец: читатель ---- */
     close(filedes[1]);
     printf("Father is working again!\n");
     FILE *fout = fopen("output.txt", "w");
-    /* читаем побайтно до конца канала; на экран выводим уже после чтения,
-       чтобы сообщения сына не перемешивались с данными */
     char *data = NULL;
     size_t len = 0, cap = 0;
     while (read(filedes[0], &temp_ch, 1) > 0) {

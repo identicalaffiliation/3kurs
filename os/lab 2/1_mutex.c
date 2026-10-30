@@ -1,12 +1,3 @@
-/*
- * 1_mutex.c — демонстрация мьютекса pthread_mutex_t
- *
- * Несколько потоков увеличивают общий счётчик.
- * Режим 0: без синхронизации  -> гонка данных, итог меньше ожидаемого.
- * Режим 1: с мьютексом        -> итог всегда верный.
- * Дополнительно показаны pthread_mutex_trylock (EBUSY)
- * и коды ошибок мьютекса с проверкой ошибок (EDEADLK, EPERM).
- */
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +16,7 @@ static void *worker(void *arg)
     (void)arg;
     for (int i = 0; i < ITERS; i++) {
         if (use_mutex) pthread_mutex_lock(&mtx);
-        counter++;                       /* критическая секция */
+        counter++;                     
         if (use_mutex) pthread_mutex_unlock(&mtx);
     }
     return NULL;
@@ -46,7 +37,6 @@ static void run(int mode)
            counter == (long)NTHREADS * ITERS ? "  OK" : "  <-- гонка данных!");
 }
 
-/* поток пытается занять уже занятый мьютекс через trylock */
 static void *try_worker(void *arg)
 {
     int rc = pthread_mutex_trylock((pthread_mutex_t *)arg);
@@ -56,7 +46,6 @@ static void *try_worker(void *arg)
     return NULL;
 }
 
-/* поток пытается освободить чужой мьютекс */
 static void *foreign_unlock(void *arg)
 {
     int rc = pthread_mutex_unlock((pthread_mutex_t *)arg);
@@ -67,7 +56,7 @@ static void *foreign_unlock(void *arg)
 
 int main(void)
 {
-    int rc = pthread_mutex_init(&mtx, NULL);   /* атрибуты по умолчанию */
+    int rc = pthread_mutex_init(&mtx, NULL);
     if (rc) { fprintf(stderr, "pthread_mutex_init: %s\n", strerror(rc)); return 1; }
 
     printf("=== 1. Гонка данных и её устранение мьютексом ===\n");
@@ -76,11 +65,11 @@ int main(void)
 
     printf("\n=== 2. pthread_mutex_trylock ===\n");
     pthread_t t;
-    pthread_mutex_lock(&mtx);                       /* main владеет мьютексом */
+    pthread_mutex_lock(&mtx);                      
     pthread_create(&t, NULL, try_worker, &mtx);
     pthread_join(t, NULL);
     pthread_mutex_unlock(&mtx);
-    pthread_create(&t, NULL, try_worker, &mtx);     /* теперь свободен */
+    pthread_create(&t, NULL, try_worker, &mtx);
     pthread_join(t, NULL);
 
     printf("\n=== 3. Мьютекс с проверкой ошибок (PTHREAD_MUTEX_ERRORCHECK) ===\n");
@@ -91,7 +80,7 @@ int main(void)
     pthread_mutex_init(&emtx, &attr);
 
     pthread_mutex_lock(&emtx);
-    rc = pthread_mutex_lock(&emtx);                 /* повторный захват */
+    rc = pthread_mutex_lock(&emtx);
     printf("повторный lock тем же потоком: rc = %d (%s)\n",
            rc, rc == EDEADLK ? "EDEADLK — уже занят этим потоком" : strerror(rc));
     pthread_create(&t, NULL, foreign_unlock, &emtx);

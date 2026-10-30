@@ -65,7 +65,6 @@ static void *try_worker(void *a)
 
 int main(void)
 {
-    /* PTHREAD_PROCESS_PRIVATE — только для потоков одного процесса */
     int rc = pthread_spin_init(&spin, PTHREAD_PROCESS_PRIVATE);
     if (rc) { fprintf(stderr, "pthread_spin_init: %s\n", strerror(rc)); return 1; }
 

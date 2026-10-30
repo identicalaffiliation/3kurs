@@ -1,7 +1,3 @@
-/*
- * client_fifo1.c — Уровень 2 (B): клиент на именованных каналах
- * Запуск: echo /etc/hostname | ./client_fifo1
- */
 #include "common.h"
 
 int main(void)

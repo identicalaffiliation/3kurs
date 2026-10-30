@@ -28,7 +28,6 @@
 
 static pthread_t t1, t2;
 
-/* идентификатор нити ядра: в Linux gettid(), в macOS pthread_threadid_np() */
 static long my_tid(void)
 {
 #ifdef __APPLE__
@@ -44,7 +43,7 @@ static void usr1_handler(int sig)
 {
     printf("  [нить 2, tid %ld] получен сигнал %d (SIGUSR1) — выходим через pthread_exit\n",
            my_tid(), sig);
-    pthread_exit(NULL);                      /* выход из обработчика и завершение нити */
+    pthread_exit(NULL);                   
 }
 
 static void *thread2(void *a)
