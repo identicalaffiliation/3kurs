@@ -1,21 +1,8 @@
-/*
- * l2_server.c — Уровень 2 (A): сервер очереди сообщений
- *
- *  - создаёт очередь: msgget(key, PERM | IPC_CREAT);
- *  - в цикле ждёт запрос (тип 1), печатает его и отвечает клиенту;
- *  - SIGINT обрабатывается своим обработчиком: он удаляет очередь
- *    (msgctl IPC_RMID), восстанавливает прежнюю диспозицию SIGINT
- *    и завершает сервер;
- *  - при ошибке сервер сам посылает себе SIGINT через kill().
- *
- * Запуск: ./l2_server &   затем несколько раз ./l2_client "текст"
- * Остановка: kill -INT <pid сервера>  (или Ctrl+C)
- */
 #include <signal.h>
 #include "l2_common.h"
 
 static int msgid = -1;
-static struct sigaction old_int;          /* прежняя диспозиция SIGINT */
+static struct sigaction old_int;          
 
 static void sigint_handler(int sig)
 {
@@ -27,7 +14,7 @@ static void sigint_handler(int sig)
     else
         len = snprintf(msg, sizeof msg, "\nСервер: получен SIGINT, очередь удалить не удалось\n");
     if (write(STDOUT_FILENO, msg, len) < 0) {}
-    sigaction(SIGINT, &old_int, NULL);    /* восстанавливаем диспозицию */
+    sigaction(SIGINT, &old_int, NULL);    
     _exit(0);
 }
 
@@ -59,7 +46,7 @@ int main(void)
         if (n < 0) {
             if (errno == EINTR) continue;
             perror("Сервер: msgrcv");
-            kill(getpid(), SIGINT);       /* ошибка -> корректное завершение */
+            kill(getpid(), SIGINT);       
         }
         served++;
         printf("Сервер: [%d] запрос от клиента pid %d: \"%s\"\n", served, (int)req.pid, req.text);

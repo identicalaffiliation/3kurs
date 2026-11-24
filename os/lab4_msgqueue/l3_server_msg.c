@@ -1,13 +1,3 @@
-/*
- * l3_server_msg.c — Уровень 3 (A): файловый сервер на двух очередях
- *
- * Очередь MQ_KEY1: клиент -> сервер (имя файла)
- * Очередь MQ_KEY2: сервер -> клиент (строки файла, затем пустое сообщение)
- *
- * Исправления скелета: если файл не открылся, клиенту отправляется
- * текст ошибки (в скелете только printf на сервере), а fclose(NULL)
- * не вызывается (в скелете это падение программы).
- */
 #include "l3_msg.h"
 
 static void server(int readid, int writeid);
@@ -59,7 +49,7 @@ static void server(int readid, int writeid)
         fclose(fp);
         printf("Server: отправлено строк: %d\n", lines);
     }
-    ourmesg.mesg_len = 0;                       /* пустое сообщение = конец */
+    ourmesg.mesg_len = 0;                      
     mesg_send(writeid, &ourmesg);
     printf("Server: отправлен признак конца (сообщение длины 0)\n");
 }

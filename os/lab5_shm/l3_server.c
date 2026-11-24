@@ -1,13 +1,3 @@
-/*
- * l3_server.c — Уровень 3 (A): сервер
- *
- * Создаёт сегмент разделяемой памяти и группу семафоров, затем в цикле
- * обслуживает клиентов: читает из памяти имя файла и кладёт туда
- * содержимое файла порциями (или текст ошибки).
- * Остановка: Ctrl+C или kill -INT <pid> — объекты IPC удаляются.
- *
- * Запуск: ./l3_server &   затем   echo /путь/к/файлу | ./l3_client
- */
 #include <signal.h>
 #include "l3_shm.h"
 
@@ -25,7 +15,6 @@ static void cleanup(int sig)
     _exit(0);
 }
 
-/* Создать объект заново: если остался от прошлого запуска — удалить */
 static int create_shm(key_t key)
 {
     int id = shmget(key, sizeof(ShmMsg), PERM | IPC_CREAT | IPC_EXCL);
@@ -45,10 +34,6 @@ static int create_sem(key_t key)
     return id;
 }
 
-/* Ждать подтверждения от клиента. Если клиент за это время умер
-   (например, его убили Ctrl+C), обычный P(SEM_ACK) ждал бы вечно.
-   Поэтому семафор опрашивается без блокировки (IPC_NOWAIT), а между
-   попытками проверяется, жив ли клиент: kill(pid, 0) шлёт «пустой» сигнал. */
 static int wait_ack(void)
 {
     for (;;) {
@@ -83,8 +68,8 @@ static void serve_one(int n)
     while ((r = read(fd, box->data, CHUNK)) > 0) {
         box->type = T_DATA;
         box->len = (int)r;
-        V(semid, SEM_RESP);             /* порция готова */
-        if (wait_ack() < 0) {           /* ждём, пока клиент заберёт */
+        V(semid, SEM_RESP);            
+        if (wait_ack() < 0) {          
             printf("Сервер: [%d] клиент pid %d пропал, передача прервана\n", n, (int)box->client);
             close(fd);
             semctl(semid, SEM_RESP, SETVAL, (union semun){ .val = 0 });

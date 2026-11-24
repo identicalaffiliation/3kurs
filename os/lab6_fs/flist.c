@@ -1,32 +1,3 @@
-/*
- * flist.c — Лабораторная «Файловая система», уровни 1, 2, 3 (A)
- *
- * Задание: два процесса заносят очередной элемент в связанный список,
- * который хранится в файле.
- *
- * Формат файла (все числа — int32_t):
- *   [ заголовок: magic | head | tail | count ]  смещение 0
- *   [ узел: value | pid | author[8] | next ]   дописываются в конец файла
- * head/tail/next — СМЕЩЕНИЯ узлов в файле (вместо указателей), -1 = нет.
- *
- * Добавление элемента (ничего не стирается, узлы только дописываются):
- *   1) прочитать заголовок                       lseek(0) + read
- *   2) дописать новый узел в конец файла         lseek(SEEK_END) + write
- *   3) прописать его смещение в next старого хвоста (или в head)
- *   4) обновить tail и count в заголовке         lseek(0) + write
- * Это критическая секция: если два процесса выполнят её одновременно,
- * оба прочитают один и тот же tail, и один из новых узлов «потеряется».
- * Поэтому на время шагов 1–4 файл блокируется: fcntl(F_SETLKW).
- *
- * Команды:
- *   ./flist init  FILE                 создать пустой список (creat)
- *   ./flist add   FILE NAME N [-n]     добавить N элементов от имени NAME;
- *                                      -n — БЕЗ блокировки (покажет потери)
- *   ./flist print FILE [-q]            обойти список и проверить его;
- *                                      -q — только итог, без узлов
- *   ./flist hold  FILE SEC             захватить блокировку на SEC секунд
- *   ./flist check FILE                 F_GETLK: кто держит блокировку; dup
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define MAGIC 0x4C495354            /* "LIST" */
+#define MAGIC 0x4C495354         
 
 typedef struct {
     int32_t magic, head, tail, count;
@@ -53,7 +24,6 @@ typedef struct {
 
 static void die(const char *what) { perror(what); exit(1); }
 
-/* Прочитать/записать ровно n байт по смещению off (lseek + read/write) */
 static void read_at(int fd, off_t off, void *buf, size_t n)
 {
     if (lseek(fd, off, SEEK_SET) < 0) die("lseek");
@@ -65,8 +35,6 @@ static void write_at(int fd, off_t off, const void *buf, size_t n)
     if (write(fd, buf, n) != (ssize_t)n) die("write");
 }
 
-/* Блокировка всего файла: type = F_WRLCK (захват) или F_UNLCK (снятие).
-   F_SETLKW — если файл занят, процесс засыпает до освобождения. */
 static void lock_file(int fd, short type)
 {
     struct flock fl;
@@ -74,7 +42,7 @@ static void lock_file(int fd, short type)
     fl.l_type = type;
     fl.l_whence = SEEK_SET;
     fl.l_start = 0;
-    fl.l_len = 0;                   /* 0 = до конца файла, т.е. весь файл */
+    fl.l_len = 0;                 
     while (fcntl(fd, F_SETLKW, &fl) < 0) {
         if (errno != EINTR) die("fcntl F_SETLKW");
     }
@@ -92,7 +60,6 @@ static int open_list(const char *path, int flags)
 
 static void cmd_init(const char *path)
 {
-    /* creat = open(path, O_WRONLY | O_CREAT | O_TRUNC, mode) */
     int fd = creat(path, 0644);
     if (fd < 0) die("creat");
     Header h = { MAGIC, -1, -1, 0 };
@@ -109,9 +76,9 @@ static void add_one(int fd, const char *name, int value, int use_lock)
 
     if (use_lock) lock_file(fd, F_WRLCK);
 
-    read_at(fd, 0, &h, sizeof h);                       /* 1 */
+    read_at(fd, 0, &h, sizeof h);                    
 
-    memset(&n, 0, sizeof n);                            /* 2 */
+    memset(&n, 0, sizeof n);                       
     n.value = value;
     n.pid = (int32_t)getpid();
     strncpy(n.author, name, sizeof n.author - 1);
@@ -119,14 +86,14 @@ static void add_one(int fd, const char *name, int value, int use_lock)
     if ((off = lseek(fd, 0, SEEK_END)) < 0) die("lseek");
     if (write(fd, &n, sizeof n) != (ssize_t)sizeof n) die("write");
 
-    if (h.tail < 0)                                     /* 3 */
+    if (h.tail < 0)                                   
         h.head = (int32_t)off;
     else {
         int32_t o = (int32_t)off;
         write_at(fd, h.tail + offsetof(Node, next), &o, sizeof o);
     }
 
-    h.tail = (int32_t)off;                              /* 4 */
+    h.tail = (int32_t)off;                           
     h.count++;
     write_at(fd, 0, &h, sizeof h);
 
@@ -159,7 +126,7 @@ static void cmd_print(const char *path, int quiet)
 
     int cycle = 0, broken = 0;
     for (int32_t off = h.head; off >= 0; off = n.next) {
-        if (reachable >= stored) { cycle = 1; break; }     /* узлов больше, чем есть в файле */
+        if (reachable >= stored) { cycle = 1; break; }   
         if (off + (off_t)sizeof n > st.st_size) { broken = 1; break; }
         read_at(fd, off, &n, sizeof n);
         reachable++;
@@ -208,7 +175,7 @@ static void cmd_check(const char *path)
     int fd = open_list(path, O_RDWR);
     struct flock fl;
     memset(&fl, 0, sizeof fl);
-    fl.l_type = F_WRLCK;            /* «могу ли я поставить такую блокировку?» */
+    fl.l_type = F_WRLCK;           
     fl.l_whence = SEEK_SET;
     if (fcntl(fd, F_GETLK, &fl) < 0) die("fcntl F_GETLK");
     if (fl.l_type == F_UNLCK)
@@ -217,8 +184,6 @@ static void cmd_check(const char *path)
         printf("check: F_GETLK — файл заблокирован процессом pid %d (%s)\n",
                (int)fl.l_pid, fl.l_type == F_WRLCK ? "блокировка записи" : "блокировка чтения");
 
-    /* dup: новый дескриптор ссылается на тот же открытый файл,
-       поэтому у них ОБЩИЙ указатель смещения */
     int fd2 = dup(fd);
     if (fd2 < 0) die("dup");
     lseek(fd, 8, SEEK_SET);

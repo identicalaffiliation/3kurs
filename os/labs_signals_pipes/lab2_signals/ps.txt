@@ -1,12 +1,12 @@
 ===== ДО посылки SIGUSR1 =====
   PID  PPID STAT COMMAND
-29439 29405 S+   ./father
-29440 29439 S+   ./father
-29441 29439 S+   ./father
-29442 29439 S+   ./father
+16199 16188 S+   ./father
+16201 16199 S+   ./father
+16202 16199 S+   ./father
+16203 16199 S+   ./father
 ===== ПОСЛЕ посылки SIGUSR1 =====
   PID  PPID STAT COMMAND
-29439 29405 S+   ./father
-29440 29439 Z+   <defunct>
-29441 29439 S+   ./father
-29442 29439 S+   ./father
+16199 16188 S+   ./father
+16201 16199 Z+   <defunct>
+16202 16199 S+   ./father
+16203 16199 S+   ./father

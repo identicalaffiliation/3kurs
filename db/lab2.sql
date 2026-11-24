@@ -167,3 +167,61 @@ WHERE route_id = (SELECT id FROM routes WHERE name = 'Вокзал') RETURNING *
 DELETE FROM routes WHERE name = 'Вокзал' RETURNING *;
 ROLLBACK;
 
+SELECT p.id, p.last_name, p.first_name, p.father_name
+FROM auto_personal p
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM auto a
+    JOIN journal j ON j.auto_id = a.id
+    JOIN routes r  ON r.id = j.route_id
+    WHERE a.personal_id = p.id AND r.name IN ('Аэропорт', 'Вокзал', 'Центр', 'Университет')
+);
+
+DELETE FROM auto_personal p
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM auto a
+    JOIN journal j ON j.auto_id = a.id
+    JOIN routes r  ON r.id = j.route_id
+    WHERE a.personal_id = p.id AND r.name = 'Аэропорт'
+);
+
+SELECT
+    j.route_id,
+    r.name
+FROM journal j
+LEFT JOIN routes r ON j.route_id = r.id
+WHERE route_id IS NOT NULL;
+
+DELETE FROM routes r WHERE NOT EXISTS (
+    SELECT 1
+    FROM journal j
+    WHERE j.route_id = r.id
+);
+
+SELECT
+    p.id AS personal_id,
+    p.last_name,
+    p.first_name,
+    p.father_name,
+    a.id AS auto_id,
+    a.num,
+    a.color,
+    a.mark,
+    r.name AS route,
+    j.time_out,
+    j.time_in
+FROM auto_personal p
+LEFT JOIN auto a ON a.personal_id = p.id
+LEFT JOIN journal j ON j.auto_id = a.id
+LEFT JOIN routes r ON r.id = j.route_id
+ORDER BY p.id, a.id, j.time_out;
+
+DELETE FROM auto_personal p
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM auto a
+             JOIN journal j ON j.auto_id = a.id
+             JOIN routes r  ON r.id = j.route_id
+    WHERE a.personal_id = p.id AND r.name IN ('Аэропорт', 'Вокзал', 'Центр', 'Университет')
+);
